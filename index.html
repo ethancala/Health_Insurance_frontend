@@ -239,5 +239,87 @@
     </form>
 
     <div id="result"></div>
+
+
+
+    <script>
+        async function calculateRisk(event) {
+    event.preventDefault(); // Prevent page refresh
+
+    // Collect user input
+    const age = document.getElementById("age").value;
+    const heightFeet = document.getElementById("feet").value;
+    const heightInches = document.getElementById("inches").value;
+    const weight = document.getElementById("weight").value;
+    const systolic = document.getElementById("systolic").value;
+    const diastolic = document.getElementById("diastolic").value;
+
+    // Check if any field is empty or invalid
+    if (!age || !heightFeet || !heightInches || !weight || !systolic || !diastolic) {
+        document.getElementById("result").innerHTML = `<p style="color: red;">All fields must be filled out.</p>`;
+        return;
+    }
+
+    // Collect family history
+    const familyHistory = [];
+    document.querySelectorAll('input[name="disease"]:checked').forEach((checkbox) => {
+        familyHistory.push(checkbox.value);
+    });
+
+    // Convert height to inches
+    const height = parseInt(heightFeet) * 12 + parseInt(heightInches);
+    console.log(height)
+    // Ensure all values are positive numbers
+    if (age <= 0 || height <= 0 || weight <= 0 || systolic <= 0 || diastolic <= 0) {
+        document.getElementById("result").innerHTML = `<p style="color: red;">Ensure all fields are positive numbers.</p>`;
+        return;
+    }
+
+    // Create request payload
+    const requestData = {
+        age: parseInt(age),
+        feet: parseInt(heightFeet),
+        inches: parseInt(heightInches),
+        weight: parseInt(weight),
+        systolic: parseInt(systolic),
+        diastolic: parseInt(diastolic),
+        family_history: familyHistory
+    };
+
+    console.log("Sending data:", requestData); // Debugging
+
+    try {
+        // Send data to backend API
+        const response = await fetch("http://localhost:3000/api/calculate-risk", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestData),
+        });
+
+        const data = await response.json();
+
+        // Debugging response data
+        console.log("API Response:", data);
+
+        if (data && data.risk_level && data.suggestion) {
+            // Display result
+            document.getElementById("result").innerHTML = `
+                <h3>Risk Assessment:</h3>
+                <p>${data.risk_level}</p>
+                <p>Suggested Action: ${data.suggestion}</p>
+            `;
+        } else {
+            // Handle error if missing data
+            document.getElementById("result").innerHTML = `<p style="color: red;">Error: Invalid response from the server.</p>`;
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        document.getElementById("result").innerHTML = `<p style="color: red;">Error connecting to API</p>`;
+    }
+}
+
+    </script>
+
+
 </body>
 </html>
